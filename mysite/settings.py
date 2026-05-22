@@ -29,6 +29,9 @@ SECRET_KEY = 'django-insecure-123456789'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://auctionsite2-production-279c.up.railway.app',
+]
 
 
 # Application definition

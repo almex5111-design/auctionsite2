@@ -1,0 +1,83 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
+    
+    <div class="bg-white p-6 rounded-lg shadow-md h-fit">
+        <div class="text-center mb-4">
+            <div class="inline-block bg-blue-100 text-blue-600 p-4 rounded-full mb-2">
+                <i class="fas fa-user text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800">{{ user.username }}</h2>
+            <p class="text-sm text-gray-500">Участник аукциона</p>
+        </div>
+        
+        <div class="border-t border-gray-200 pt-4 space-y-3">
+            <div>
+                <span class="block text-xs text-gray-400 uppercase font-bold">Имя пользователя (Логин)</span>
+                <span class="text-gray-700 font-medium">{{ user.username }}</span>
+            </div>
+            <div>
+                <span class="block text-xs text-gray-400 uppercase font-bold">Email</span>
+                <span class="text-gray-700 font-medium">{{ user.email|default:"Не указан" }}</span>
+            </div>
+            <div>
+                <span class="block text-xs text-gray-400 uppercase font-bold">Статус пароля</span>
+                <span class="text-green-600 text-sm font-medium"><i class="fas fa-lock"></i> Зашифрован и защищен</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+            <i class="fas fa-history text-blue-600 mr-2"></i> Мои ставки
+        </h3>
+
+        {% if user_bids %}
+            <div class="space-y-4">
+                {% for bid in user_bids %}
+                    <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                {% if bid.item.main_image %}
+                                    <img src="{{ bid.item.main_image.url }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <i class="fas fa-image text-gray-400"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="/item/{{ bid.item.id }}/" class="text-lg font-bold text-blue-600 hover:underline block">
+                                    {{ bid.item.title }}
+                                </a>
+                                <span class="text-xs text-gray-400 block mt-0.5">
+                                    Дата ставки: {{ bid.created_at|date:"d.m.Y H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <span class="block text-sm text-gray-500">Ваша ставка:</span>
+                            <span class="text-lg font-bold text-gray-800">{{ bid.amount }} ₽</span>
+                            
+                            {% if bid.amount == bid.item.current_price %}
+                                <span class="block text-xs text-green-600 font-medium mt-1"><i class="fas fa-check-circle"></i> Лидирует</span>
+                            {% else %}
+                                <span class="block text-xs text-red-500 font-medium mt-1"><i class="fas fa-times-circle"></i> Перебита</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+        {% else %}
+            <div class="text-center py-12 text-gray-400">
+                <i class="fas fa-gavel text-4xl mb-2"></i>
+                <p>Вы пока не сделали ни одной ставки.</p>
+                <a href="/" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Перейти к активным лотам</a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

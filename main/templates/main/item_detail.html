@@ -1,0 +1,119 @@
+{% extends 'main/base.html' %}
+
+{% block title %}{{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="space-y-6">
+        <div class="bg-white rounded-lg shadow-lg p-4">
+            <h1 class="text-3xl font-bold mb-4">{{ item.title }}</h1>
+            <p class="text-gray-600 mb-4">{{ item.description }}</p>
+            <p class="text-gray-600">Категория: {{ item.category.name }}</p>
+            <p class="text-gray-600">Продавец: {{ item.seller.username }}</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-4">
+            <h2 class="text-xl font-bold mb-4">Фотографии лота</h2>
+            
+            {% if item.main_image %}
+                <div class="w-full h-80 overflow-hidden rounded-lg bg-gray-100 mb-4">
+                    <img id="main-display-image" src="{{ item.main_image.url }}" alt="{{ item.title }}" class="w-full h-full object-cover transition-all duration-300">
+                </div>
+            {% else %}
+                <div class="w-full h-80 bg-gray-200 rounded-lg flex items-center justify-center mb-4 text-gray-400">
+                    Нет главного фото
+                </div>
+            {% endif %}
+
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                
+                {% if item.main_image %}
+                    <div class="h-20 sm:h-24 overflow-hidden rounded-md bg-gray-100 border-2 border-blue-500 hover:opacity-80 transition cursor-pointer thumb-nail" 
+                         onclick="changeImage('{{ item.main_image.url }}', this)">
+                        <img src="{{ item.main_image.url }}" alt="Главное фото" class="w-full h-full object-cover">
+                    </div>
+                {% endif %}
+
+                {% for extra in item.images.all %}
+                    <div class="h-20 sm:h-24 overflow-hidden rounded-md bg-gray-100 border-2 border-gray-200 hover:opacity-80 transition cursor-pointer thumb-nail" 
+                         onclick="changeImage('{{ extra.image.url }}', this)">
+                        <img src="{{ extra.image.url }}" alt="Дополнительное фото" class="w-full h-full object-cover">
+                    </div>
+                {% empty %}
+                    {% if not item.main_image %}
+                        <p class="text-sm text-gray-500 italic col-span-full">Фотографий не загружено.</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center mb-6">
+                <p class="text-gray-600">Текущая ставка</p>
+                <p class="text-4xl font-bold text-blue-600">{{ item.current_price }} ₽</p>
+                <p class="text-gray-500">Начальная цена: {{ item.start_price }} ₽</p>
+                <p class="text-gray-500">Шаг ставки: {{ item.min_bid_step }} ₽</p>
+            </div>
+            
+            <div class="border-t pt-4">
+                <p class="font-bold mb-2">Минимальная следующая ставка:</p>
+                <p class="text-2xl text-green-600 mb-4">{{ item.current_price|add:item.min_bid_step }} ₽</p>
+            </div>
+            
+            {% if user.is_authenticated and user != item.seller and item.status == 'active' %}
+                <form method="POST" class="mb-4">
+                    {% csrf_token %}
+                    <div class="flex gap-2">
+                        <input type="number" 
+                               name="amount" 
+                               step="{{ item.min_bid_step }}"
+                               min="{{ item.current_price|add:item.min_bid_step }}"
+                               value="{{ item.current_price|add:item.min_bid_step }}"
+                               class="flex-1 px-3 py-2 border rounded-lg"
+                               required>
+                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                            Сделать ставку
+                        </button>
+                    </div>
+                </form>
+            {% elif not user.is_authenticated %}
+                <div class="bg-yellow-100 p-3 rounded text-center mb-4">
+                    <a href="/admin/login/" class="text-blue-600">Войдите</a>, чтобы сделать ставку
+                </div>
+            {% elif user == item.seller %}
+                <div class="bg-yellow-100 p-3 rounded text-center mb-4">
+                    Вы не можете ставить на свой лот
+                </div>
+            {% endif %}
+            
+            <div class="bg-gray-100 p-3 rounded">
+                <p><strong>Статус:</strong> 
+                    {% if item.status == 'active' %}Активен{% elif item.status == 'closed' %}Завершён{% else %}Отменён{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function changeImage(imageUrl, element) {
+        // Находим главное большое фото и меняем ему src (путь к картинке)
+        const mainImage = document.getElementById('main-display-image');
+        if (mainImage) {
+            mainImage.src = imageUrl;
+        }
+        
+        // Сбрасываем синие активные рамки у всех миниатюр, делая их обычными серыми
+        document.querySelectorAll('.thumb-nail').forEach(thumb => {
+            thumb.classList.remove('border-blue-500');
+            thumb.classList.add('border-gray-200');
+        });
+        
+        // Добавляем красивую синюю рамку именно той миниатюре, на которую кликнули
+        element.classList.remove('border-gray-200');
+        element.classList.add('border-blue-500');
+    }
+</script>
+{% endblock %}
